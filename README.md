@@ -25,6 +25,10 @@ It bridges the gap between "live web data" and "actionable business artifacts" f
 ## Repository Structure
 ```text
 /ScrapeLogic-Model-Generator
+├── /frontend
+│   ├── landing-page.html         # URL-input focused lead capture & demo UI
+│   ├── styles.css                # Custom styling for the "Logic Stack" aesthetic
+│   └── main.js                   # Frontend logic for API triggers & loading states
 ├── /workflows
 │   ├── url-scraper.json          # n8n workflow for web crawling
 │   ├── logic-engine.json         # Orchestration for Claude & GPT-4o
