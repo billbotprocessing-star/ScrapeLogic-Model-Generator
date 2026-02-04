@@ -6,14 +6,14 @@ It bridges the gap between "raw data" and "business artifacts" for operators, ma
 
 ---
 
-## 🧠 The Logic Stack
+## The Logic Stack
 * **Orchestration:** [n8n](https://n8n.io/) (Workflow automation & API glue)
 * **Reasoning Engine:** [Claude 3.5 Sonnet](https://www.anthropic.com/) (Deep analysis & positioning)
 * **Creation Engine:** [OpenAI GPT-4o](https://openai.com/) (Offer building & script generation)
 
 ---
 
-## 🛠️ Core Capabilities
+## Core Capabilities
 * **Raw Text to Strategy:** Converts unformatted scrapes into positioning and value props.
 * **Monetization Matrix:** Generates multiple angles (Subscription, Usage-based, Service-led).
 * **Competitive Gap Analysis:** Maps under-monetized opportunities based on audience cues.
@@ -22,7 +22,7 @@ It bridges the gap between "raw data" and "business artifacts" for operators, ma
 
 ---
 
-## 🏗️ Repository Structure
+## Repository Structure
 *(Planned)*
 - `/workflows`: n8n `.json` exports.
 - `/prompts`: System instructions for Claude and OpenAI.
@@ -31,7 +31,7 @@ It bridges the gap between "raw data" and "business artifacts" for operators, ma
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 1.  **n8n Instance:** Self-hosted or Cloud.
@@ -45,5 +45,5 @@ It bridges the gap between "raw data" and "business artifacts" for operators, ma
 
 ---
 
-## 🛡️ License
+## License
 Proprietary - ScrapeLogic Internal Development.
