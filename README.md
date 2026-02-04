@@ -1,34 +1,45 @@
 # ScrapeLogic-Model-Generator
 
-**ScrapeLogic** is an automated engine designed to turn messy, raw scraped website text into a validated monetization plan, offer stack, and launch roadmap in under 30 minutes.
+**ScrapeLogic** is an automated engine designed to turn any website URL into a validated monetization plan, offer stack, and launch roadmap in under 30 minutes.
 
-It bridges the gap between "raw data" and "business artifacts" for operators, marketers, and investors.
+It bridges the gap between "live web data" and "actionable business artifacts" for operators, marketers, and investors.
 
 ---
 
 ## The Logic Stack
 * **Orchestration:** [n8n](https://n8n.io/) (Workflow automation & API glue)
-* **Reasoning Engine:** [Claude 3.5 Sonnet](https://www.anthropic.com/) (Deep analysis & positioning)
+* **Reasoning Engine:** [Claude 3.5 Sonnet](https://www.anthropic.com/) (Deep analysis, gap identification, & positioning)
 * **Creation Engine:** [OpenAI GPT-4o](https://openai.com/) (Offer building & script generation)
 
 ---
 
 ## Core Capabilities
-* **Raw Text to Strategy:** Converts unformatted scrapes into positioning and value props.
-* **Monetization Matrix:** Generates multiple angles (Subscription, Usage-based, Service-led).
-* **Competitive Gap Analysis:** Maps under-monetized opportunities based on audience cues.
-* **Offer Stack Builder:** Defines Entry, Core, and Premium tiers with fulfillment requirements.
-* **Speed-to-Market Plan:** Outputs a tool stack and a first-customer acquisition script.
+* **URL-to-Strategy:** Automatically crawls and converts website content into high-level positioning and value props.
+* **Monetization Matrix:** Generates multiple revenue angles including Subscription, Usage-based, and Service-led models.
+* **Competitive Gap Analysis:** Uses Claude 3.5 to map under-monetized opportunities based on current market positioning.
+* **Offer Stack Builder:** Defines Entry, Core, and Premium tiers with specific pricing and fulfillment requirements.
+* **Speed-to-Market Plan:** Outputs a recommended tool stack and a first-customer acquisition script.
 
 ---
 
 ## Repository Structure
-*(Planned)*
-- `/workflows`: n8n `.json` exports.
-- `/prompts`: System instructions for Claude and OpenAI.
-- `/scripts`: Custom data cleaning and utility scripts.
-- `/docs`: Business artifact templates and examples.
-
+```text
+/ScrapeLogic-Model-Generator
+├── /workflows
+│   ├── url-scraper.json          # n8n workflow for web crawling
+│   ├── logic-engine.json         # Orchestration for Claude & GPT-4o
+│   └── artifact-generator.json   # Formatting & export logic
+├── /prompts
+│   ├── reasoning-claude.md       # System instructions for positioning analysis
+│   ├── creation-gpt4o.md        # System instructions for offer building
+│   └── cleaning-utils.md        # Logic for stripping noise from scrapes
+├── /scripts
+│   ├── data-formatter.js         # Custom JS for cleaning messy HTML
+│   └── api-bridge.py             # Utility for custom endpoint connections
+├── /docs
+│   ├── templates                 # Markdown templates for business artifacts
+│   └── examples                  # Sample "Before & After" output reports
+└── README.md
 ---
 
 ## Getting Started
