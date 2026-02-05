@@ -1,1 +1,36 @@
+/**
+ * ScrapeLogic Data Formatter (Apify Edition)
+ * Maps Apify dataset items to a clean string for the Logic Engine.
+ */
 
+// 1. Apify returns an array of results. We target the primary crawl result.
+const apifyResults = items[0].json;
+const result = Array.isArray(apifyResults) ? apifyResults[0] : apifyResults;
+
+// 2. Prioritize 'markdown' if available (it preserves structure better for Claude)
+// Fallback to 'text' if markdown is absent.
+let rawData = result.markdown || result.text || result.content || "";
+
+const cleanContent = (text) => {
+    if (!text) return "No content extracted.";
+
+    return text
+        // Strip excessive navigation/footer noise often missed by crawlers
+        .replace(/Terms of Service|Privacy Policy|Cookie Policy|All Rights Reserved/gi, "")
+        // Remove URLs and image links to save tokens
+        .replace(/!\[.*?\]\(.*?\)/g, "")
+        .replace(/\[.*?\]\(.*?\)/g, (match) => match.split(']')[0].replace('[', ''))
+        // Collapse whitespace
+        .replace(/\s+/g, " ")
+        .trim()
+        .substring(0, 12000); // Optimization for Claude 3.5 window
+};
+
+return {
+    cleaned_website_data: cleanContent(rawData),
+    metadata: {
+        title: result.metadata?.title || "Unknown Site",
+        description: result.metadata?.description || "No meta description",
+        url: result.url
+    }
+};
