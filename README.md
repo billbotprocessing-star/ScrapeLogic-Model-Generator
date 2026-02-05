@@ -7,6 +7,7 @@ It bridges the gap between "live web data" and "actionable business artifacts" f
 ---
 
 ## 🔗 Project Resources
+
 * **Live Blueprint/Artifact:** [ScrapeLogic App](https://scrapelogic.replit.app/)
 
 ---
