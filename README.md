@@ -6,6 +6,10 @@ It bridges the gap between "live web data" and "actionable business artifacts" f
 
 ---
 
+## 🔗 Project Resources
+* **Live Blueprint/Artifact:** [ScrapeLogic Visual Logic & UI](https://claude.ai/public/artifacts/5e6f9340-d7b7-41d7-a1f9-3c8ef3494b60)
+
+---
 ## The Logic Stack
 * **Orchestration:** [n8n](https://n8n.io/) (Workflow automation & API glue)
 * **Reasoning Engine:** [Claude 3.5 Sonnet](https://www.anthropic.com/) (Deep analysis, gap identification, & positioning)
