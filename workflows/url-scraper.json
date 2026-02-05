@@ -1,1 +1,72 @@
-
+{
+  "name": "ScrapeLogic - Apify Scraper Integration",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "analyze-site",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "position": [100, 300],
+      "webhookId": "scrapelogic-input"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.apify.com/v2/acts/6sigmag~fast-website-content-crawler/run-sync-get-dataset-items",
+        "sendQueryParameters": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "token",
+              "value": "[INSERT-APIFY-TOKEN]"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n    \"startUrls\": [\n        \"{{ $json.body.url }}\"\n    ]\n}",
+        "options": {
+          "responseFormat": "json"
+        }
+      },
+      "name": "Apify Crawler",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [350, 300],
+      "notes": "Triggers Apify Fast Crawler and returns dataset items in one sync call."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract the text content from the first item returned by Apify\nconst crawlData = items[0].json;\nconst mainContent = Array.isArray(crawlData) ? crawlData[0].text : crawlData.text;\n\nreturn {\n  raw_text: mainContent || \"No content found\",\n  source_url: items[0].json[0]?.url || \"Unknown\"\n};"
+      },
+      "name": "Extract Content",
+      "type": "n8n-nodes-base.code",
+      "position": [600, 300]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Apify Crawler",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Apify Crawler": {
+      "main": [
+        [
+          {
+            "node": "Extract Content",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
