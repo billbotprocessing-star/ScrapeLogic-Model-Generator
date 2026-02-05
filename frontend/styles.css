@@ -1,4 +1,4 @@
-/* Custom "Logic Stack" Aesthetic refinements */
+/* ScrapeLogic | Logic Stack Aesthetic Refinements */
 
 :root {
     --emerald-glow: rgba(52, 211, 153, 0.15);
@@ -15,7 +15,7 @@ html {
     color: #fff;
 }
 
-/* Custom Scrollbar for a premium dark-mode feel */
+/* Custom Scrollbar (Chrome/Edge/Safari) */
 ::-webkit-scrollbar {
     width: 8px;
 }
@@ -30,24 +30,31 @@ html {
     background: #334155;
 }
 
+/* Custom Scrollbar (Firefox 2026 standard) */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: #1e293b #020617;
+}
+
 /* Logic Stack "Glow" Effect for the Main Input */
 #urlInput:focus {
     box-shadow: 0 0 20px var(--emerald-glow);
+    border-color: #10b981; /* emerald-500 */
 }
 
 /* Pulse Animation for the AI Orchestration step */
 @keyframes glow-pulse {
-    0% { border-color: rgba(52, 211, 153, 0.2); }
-    50% { border-color: rgba(52, 211, 153, 0.5); }
-    100% { border-color: rgba(52, 211, 153, 0.2); }
+    0% { border-color: rgba(52, 211, 153, 0.2); box-shadow: 0 0 5px rgba(52, 211, 153, 0.1); }
+    50% { border-color: rgba(52, 211, 153, 0.6); box-shadow: 0 0 15px rgba(52, 211, 153, 0.2); }
+    100% { border-color: rgba(52, 211, 153, 0.2); box-shadow: 0 0 5px rgba(52, 211, 153, 0.1); }
 }
 
 #processing {
+    border: 1px solid transparent; /* Prevents layout shifting */
     animation: glow-pulse 2s infinite ease-in-out;
 }
 
-/* Artifact Content Styling 
-   (Since n8n/GPT-5.2 will likely return Markdown or HTML strings) */
+/* Artifact Content Styling (Dynamic injection) */
 #resultsSection h3 {
     color: #34d399; /* emerald-400 */
 }
@@ -65,8 +72,13 @@ html {
 #resultsSection li {
     position: relative;
     padding-left: 1.5rem;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.6rem;
     color: #94a3b8; /* slate-400 */
+    transition: color 0.2s ease;
+}
+
+#resultsSection li:hover {
+    color: #f8fafc; /* lightens on hover for interactivity */
 }
 
 #resultsSection li::before {
@@ -74,6 +86,7 @@ html {
     position: absolute;
     left: 0;
     color: #10b981; /* emerald-500 */
+    font-weight: bold;
 }
 
 /* Glassmorphism Refinement */
@@ -85,5 +98,6 @@ html {
 /* Responsive Button Loading State */
 #analyzeBtn:disabled {
     cursor: not-allowed;
-    filter: grayscale(0.5);
+    filter: contrast(0.8) grayscale(0.2);
+    opacity: 0.7;
 }
