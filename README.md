@@ -54,12 +54,12 @@ Proprietary - ScrapeLogic Internal Development.
 │   └── main.js                   # Frontend logic for API triggers & loading states
 ├── /workflows
 │   ├── url-scraper.json          # n8n workflow for web crawling
-│   ├── logic-engine.json         # Orchestration for Claude & GPT-4o
+│   ├── logic-engine.json         # Orchestration for Claude & GPT-5.2
 │   └── artifact-generator.json   # Formatting & export logic
 ├── /prompts
-│   ├── reasoning-claude.md       # System instructions for positioning analysis
-│   ├── creation-gpt4o.md        # System instructions for offer building
-│   └── cleaning-utils.md        # Logic for stripping noise from scrapes
+│   ├── reasoning-claude.md       # System instructions for UI design & positioning
+│   ├── creation-gpt5.md          # System instructions for GPT-5.2 offer building
+│   └── cleaning-utils.md         # Logic for stripping noise from scrapes
 ├── /scripts
 │   ├── data-formatter.js         # Custom JS for cleaning messy HTML
 │   └── api-bridge.py             # Utility for custom endpoint connections
@@ -67,4 +67,3 @@ Proprietary - ScrapeLogic Internal Development.
 │   ├── templates                 # Markdown templates for business artifacts
 │   └── examples                  # Sample "Before & After" output reports
 └── README.md
----
