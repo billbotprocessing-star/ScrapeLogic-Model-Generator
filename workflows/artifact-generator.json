@@ -1,1 +1,53 @@
-
+{
+  "name": "ScrapeLogic - Artifact Generator",
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "/**\n * Schema Mapper & Validator\n * Ensures GPT-5.2 output matches the ScrapeLogic UI requirements.\n */\nconst input = items[0].json;\n\n// Safely parse the text if it's returned as a string\nlet data = input.text ? JSON.parse(input.text) : input;\n\n// Apply fallbacks for any missing objects to prevent UI 'red' errors\nreturn {\n  positioning: data.positioning || { title: \"Strategic Positioning\", content: \"Data pending...\", icp: \"General Market\" },\n  monetization: data.monetization || { title: \"Monetization Matrix\", angles: [] },\n  gaps: data.gaps || { title: \"Market Gaps\", opportunities: [] },\n  offerStack: data.offerStack || { title: \"Offer Stack\", tiers: [] },\n  speedToMarket: data.speedToMarket || { title: \"Launch Roadmap\", toolStack: [], firstCustomer: \"Script pending...\" },\n  timestamp: new Date().toISOString()\n};"
+      },
+      "name": "Schema Mapper",
+      "type": "n8n-nodes-base.code",
+      "version": 2,
+      "position": [1100, 300]
+    },
+    {
+      "parameters": {
+        "content": "### {{ $json.positioning.title }}\n{{ $json.positioning.content }}\n\n#### High-Ticket Offer Stack\n{{ $json.offerStack.tiers.map(t => `* **${t.name}** (${t.price}): ${t.deliverables}`).join('\\n') }}\n\n#### Launch Outreach\n> \"{{ $json.speedToMarket.firstCustomer }}\"",
+        "options": {}
+      },
+      "name": "Markdown Transpiler",
+      "type": "n8n-nodes-base.markdown",
+      "version": 1,
+      "position": [1300, 200],
+      "notes": "Creates a human-readable summary for PDF/Email exports."
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseBody": "={\n  \"status\": \"success\",\n  \"artifacts\": {{ $node[\"Schema Mapper\"].json }},\n  \"report_md\": \"{{ $node[\"Markdown Transpiler\"].json.text }}\"\n}"
+        }
+      },
+      "name": "Webhook Response",
+      "type": "n8n-nodes-base.webhookResponse",
+      "version": 1,
+      "position": [1500, 300]
+    }
+  ],
+  "connections": {
+    "Schema Mapper": {
+      "main": [
+        [
+          { "node": "Markdown Transpiler", "index": 0 },
+          { "node": "Webhook Response", "index": 0 }
+        ]
+      ]
+    },
+    "Markdown Transpiler": {
+      "main": [
+        [
+          { "node": "Webhook Response", "index": 0 }
+        ]
+      ]
+    }
+  }
+}
