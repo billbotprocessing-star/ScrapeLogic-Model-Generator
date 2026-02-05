@@ -7,7 +7,7 @@ It bridges the gap between "live web data" and "actionable business artifacts" f
 ---
 
 ## 🔗 Project Resources
-* **Live Blueprint/Artifact:** [ScrapeLogic Visual Logic & UI]([https://claude.ai/public/artifacts/5e6f9340-d7b7-41d7-a1f9-3c8ef3494b60](https://scrapelogic.replit.app/))
+* **Live Blueprint/Artifact:** [ScrapeLogic App](https://scrapelogic.replit.app/)
 
 ---
 ## The Logic Stack
