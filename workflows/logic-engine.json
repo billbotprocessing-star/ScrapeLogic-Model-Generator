@@ -3,10 +3,3 @@
  * Maps Apify dataset items to a clean string for the Logic Engine.
  */
 
-// 1. Apify returns an array of results. We target the primary crawl result.
-const apifyResults = items[0].json;
-const result = Array.isArray(apifyResults) ? apifyResults[0] : apifyResults;
-
-// 2. Prioritize 'markdown' if available (it preserves structure better for Claude)
-// Fallback to 'text' if markdown is absent.
-let rawData = result.markdown || result.text || result.content || "";
