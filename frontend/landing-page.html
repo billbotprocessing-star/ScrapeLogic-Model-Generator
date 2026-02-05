@@ -11,16 +11,45 @@ export default function ScrapeLogicLanding() {
 
   const sampleUrl = 'https://techflow-solutions.com';
 
-  const handleAnalyze = async () => {
+const handleAnalyze = async () => {
+    if (!url && !manualText) return;
+    
     setAnalyzing(true);
-    setProcessingStep(1);
-    
-    setTimeout(() => setProcessingStep(2), 1000);
-    setTimeout(() => setProcessingStep(3), 2000);
-    
-    setTimeout(() => {
-      setResults({
-        positioning: {
+    setResults(null);
+    setProcessingStep(1); // Visual: Deep Crawl started
+
+    try {
+      // 🚀 THE BRIDGE: Connecting to your n8n Webhook
+      const response = await fetch('https://billbotprocessing.app.n8n.cloud/webhook/analyze-site', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        // We send either the URL or the Manual Text based on what you entered
+        body: JSON.stringify({ 
+          url: url,
+          raw_text: manualText 
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`n8n error: ${response.statusText}`);
+      }
+
+      // n8n will process everything through Claude and OpenAI, then send back the JSON
+      const data = await response.json();
+      
+      setProcessingStep(3); // Visual: Asset Generation complete
+      setResults(data);
+      
+    } catch (error) {
+      console.error("ScrapeLogic Engine Error:", error);
+      alert("The engine is offline or the webhook is misconfigured. Check n8n!");
+    } finally {
+      setAnalyzing(false);
+      setProcessingStep(0);
+    }
+  }; {
           title: "Positioning & Value Proposition",
           content: "B2B software consultancy targeting SMBs in traditional industries (retail, healthcare, logistics). Current positioning: capability-led rather than outcome-focused. Opportunity to shift toward 'operational efficiency as a service' with measurable ROI guarantees."
         },
