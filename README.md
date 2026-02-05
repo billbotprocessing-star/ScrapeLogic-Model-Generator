@@ -13,8 +13,8 @@ It bridges the gap between "live web data" and "actionable business artifacts" f
 ---
 ## The Logic Stack
 * **Orchestration:** [n8n](https://n8n.io/) (Workflow automation & API glue)
-* **Reasoning Engine:** [Claude 3.5 Sonnet](https://www.anthropic.com/) (Deep analysis, gap identification, & positioning)
-* **Creation Engine:** [OpenAI GPT-4o](https://openai.com/) (Offer building & script generation)
+* **Reasoning Engine:** [Claude 3.5 Sonnet](https://www.anthropic.com/) (Frontend design, HTML/CSS coding, & deep analysis)
+* **Creation Engine:** [OpenAI GPT-5.2](https://openai.com/) (Advanced offer building & script generation)
 
 ---
 
