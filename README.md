@@ -8,7 +8,7 @@ It bridges the gap between "live web data" and "actionable business artifacts" f
 
 ## 🔗 Project Resources
 
-* **Live Blueprint/Artifact:** [ScrapeLogic App](https://scrapelogic.replit.app/)
+* **Live Blueprint/Artifact:** [ScrapeLogic App][(https://scrapelogic.replit.app/](https://billbotprocessing-star.github.io/ScrapeLogic-Model-Generator/)
 
 ---
 ## The Logic Stack
