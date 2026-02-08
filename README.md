@@ -8,7 +8,7 @@ It bridges the gap between "live web data" and "actionable business artifacts" f
 
 ## 🔗 Project Resources
 
-* **Live Blueprint/Artifact:** [[ScrapeLogic App][(https://billbotprocessing-star.github.io/ScrapeLogic-Model-Generator/)
+* **Live Blueprint/Artifact:** (https://billbotprocessing-star.github.io/ScrapeLogic-Model-Generator/)
 ---
 ## The Logic Stack
 * **Orchestration:** [n8n](https://n8n.io/) (Workflow automation & API glue)
