@@ -1,1 +1,200 @@
-
+{
+  "name": "ScrapeLogic - Logic Engine",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "logic-engine",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        100,
+        300
+      ],
+      "webhookId": "scrapelogic-logic-engine",
+      "notes": "POST { raw_text, source_url, goal? }. Chain from url-scraper Extract Content, or call from UI after scrape."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Normalize scraper / UI payload into Logic Engine input\n// Accepts webhook body wrapper or flat JSON (chained from url-scraper Extract Content)\nconst root = items[0].json || {};\nconst body = root.body && typeof root.body === 'object' ? root.body : root;\n\nconst raw_text = body.raw_text || body.text || body.content || '';\nconst source_url = body.source_url || body.url || 'Unknown';\nconst goal = body.goal || body.user_goal || '';\n\nif (!raw_text || String(raw_text).trim().length < 20) {\n  throw new Error('Logic Engine requires raw_text (scraped site content).');\n}\n\n// Light clean aligned with prompts/cleaning-utils.md (strip script/style noise)\nconst cleaned_text = String(raw_text)\n  .replace(/<script[\\s\\S]*?<\\/script>/gi, ' ')\n  .replace(/<style[\\s\\S]*?<\\/style>/gi, ' ')\n  .replace(/\\s+/g, ' ')\n  .trim()\n  .slice(0, 12000);\n\nreturn { raw_text: String(raw_text), source_url: String(source_url), goal: String(goal), cleaned_text };\n"
+      },
+      "name": "Normalize + Light Clean",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        320,
+        300
+      ],
+      "notes": "Optional clean per prompts/cleaning-utils.md (script/style strip + truncate)."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "[INSERT-ANTHROPIC-API-KEY]"
+            },
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\\n  \"model\": \"claude-3-5-sonnet-20241022\",\\n  \"max_tokens\": 2000,\\n  \"system\": \"You are the ScrapeLogic Strategic Analyst (Claude 3.5 Sonnet). Follow prompts/reasoning-claude.md. Analyze the scrape; return ONLY valid JSON with positioning{title,content,icp}, gaps{title,opportunities[3]}, ui_guidance{design_notes,key_elements}. No fluff; aggressive gap-finding.\",\\n  \"messages\": [\\n    {\\n      \"role\": \"user\",\\n      \"content\": \"Source URL: {{ $json.source_url }}\\\\nUser goal: {{ $json.goal }}\\\\n\\\\n--- SCRAPE ---\\\\n{{ $json.cleaned_text }}\"\\n    }\\n  ]\\n}",
+        "options": {
+          "responseFormat": "json"
+        }
+      },
+      "name": "Claude Strategic Analyst",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        560,
+        300
+      ],
+      "notes": "System prompt from prompts/reasoning-claude.md. Replace [INSERT-ANTHROPIC-API-KEY] or bind n8n Anthropic credential \u2014 never commit real keys."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse Claude Messages API \u2192 strategic JSON (prompts/reasoning-claude.md schema)\nconst resp = items[0].json;\nlet text = '';\nif (resp.content && Array.isArray(resp.content)) {\n  text = resp.content.map(p => p.text || '').join('\\n');\n} else if (typeof resp.text === 'string') {\n  text = resp.text;\n}\n\nconst fenced = text.match(/```(?:json)?\\s*([\\s\\S]*?)```/);\nconst candidate = (fenced ? fenced[1] : text).trim();\nlet strategy;\ntry { strategy = JSON.parse(candidate); }\ncatch (e) { throw new Error('Claude did not return parseable JSON: ' + e.message); }\n\nconst upstream = $('Normalize + Light Clean').first().json;\nreturn {\n  source_url: upstream.source_url,\n  goal: upstream.goal,\n  positioning: strategy.positioning || {},\n  gaps: strategy.gaps || {},\n  ui_guidance: strategy.ui_guidance || {},\n  strategy\n};\n"
+      },
+      "name": "Parse Claude JSON",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        800,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer [INSERT-OPENAI-API-KEY]"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\\n  \"model\": \"gpt-4o\",\\n  \"temperature\": 0.4,\\n  \"response_format\": { \"type\": \"json_object\" },\\n  \"messages\": [\\n    {\\n      \"role\": \"system\",\\n      \"content\": \"You are the ScrapeLogic Creation Engine (GPT). Follow prompts/creation-gpt5.md. From Claude strategy JSON, return ONLY valid JSON with monetization{title,angles[]}, offerStack{title,tiers[3]}, speedToMarket{title,toolStack[],firstCustomer}. Realistic pricing; outreach script personalized to gaps.\"\\n    },\\n    {\\n      \"role\": \"user\",\\n      \"content\": \"Build monetization, offer stack, and launch roadmap from this Claude strategy JSON:\\n{{ JSON.stringify({ positioning: $json.positioning, gaps: $json.gaps, ui_guidance: $json.ui_guidance, source_url: $json.source_url }) }}\"\\n    }\\n  ]\\n}",
+        "options": {
+          "responseFormat": "json"
+        }
+      },
+      "name": "GPT Creation Engine",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1040,
+        300
+      ],
+      "notes": "System prompt from prompts/creation-gpt5.md. Replace [INSERT-OPENAI-API-KEY] or bind n8n OpenAI credential \u2014 never commit real keys."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Merge Claude + GPT into artifact-generator Schema Mapper shape\nconst gptResp = items[0].json;\nlet content = gptResp.choices?.[0]?.message?.content || gptResp.text || '';\nif (typeof content !== 'string') content = JSON.stringify(content);\n\nconst fenced = content.match(/```(?:json)?\\s*([\\s\\S]*?)```/);\nconst candidate = (fenced ? fenced[1] : content).trim();\nlet creation;\ntry { creation = JSON.parse(candidate); }\ncatch (e) { throw new Error('GPT did not return parseable JSON: ' + e.message); }\n\nconst strategy = $('Parse Claude JSON').first().json;\n\nconst merged = {\n  positioning: strategy.positioning,\n  gaps: strategy.gaps,\n  ui_guidance: strategy.ui_guidance,\n  monetization: creation.monetization,\n  offerStack: creation.offerStack,\n  speedToMarket: creation.speedToMarket,\n  source_url: strategy.source_url\n};\n\n// `text` path supports Schema Mapper: input.text ? JSON.parse(input.text) : input\nreturn { ...merged, text: JSON.stringify(merged) };\n"
+      },
+      "name": "Merge Strategy + Creation",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        1280,
+        300
+      ],
+      "notes": "Emits positioning/gaps/monetization/offerStack/speedToMarket for workflows/artifact-generator.json Schema Mapper."
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseBody": "={{ JSON.stringify($json) }}"
+        }
+      },
+      "name": "Webhook Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "position": [
+        1520,
+        300
+      ],
+      "notes": "Returns merged JSON. Feed into Artifact Generator Schema Mapper next."
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Normalize + Light Clean",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize + Light Clean": {
+      "main": [
+        [
+          {
+            "node": "Claude Strategic Analyst",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude Strategic Analyst": {
+      "main": [
+        [
+          {
+            "node": "Parse Claude JSON",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Claude JSON": {
+      "main": [
+        [
+          {
+            "node": "GPT Creation Engine",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GPT Creation Engine": {
+      "main": [
+        [
+          {
+            "node": "Merge Strategy + Creation",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Strategy + Creation": {
+      "main": [
+        [
+          {
+            "node": "Webhook Response",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
