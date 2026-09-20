@@ -1,23 +1,58 @@
 {
-  "name": "ScrapeLogic - Apify Scraper Integration",
+  "name": "ScrapeLogic - URL Scraper (Jina default)",
   "nodes": [
     {
       "parameters": {
         "httpMethod": "POST",
         "path": "analyze-site",
-        "responseMode": "onReceived",
+        "responseMode": "responseNode",
         "options": {}
       },
       "name": "Webhook Trigger",
       "type": "n8n-nodes-base.webhook",
-      "position": [100, 300],
-      "webhookId": "scrapelogic-input"
+      "position": [
+        80,
+        300
+      ],
+      "webhookId": "scrapelogic-input",
+      "notes": "POST { url, use_apify?, deep_search? }. responseNode so caller gets scrape result."
+    },
+    {
+      "parameters": {
+        "jsCode": "const root = items[0].json || {};\nconst body = root.body && typeof root.body === 'object' ? root.body : root;\nlet url = String(body.url || body.source_url || '').trim();\nif (!/^https?:\\/\\//i.test(url)) {\n  throw new Error('Provide an http(s) url in body.url');\n}\ntry {\n  const u = new URL(url);\n  const host = u.hostname.toLowerCase();\n  if (host === 'localhost' || host.endsWith('.local') || host === '127.0.0.1' || host === '::1'\n      || /^(10\\.|192\\.168\\.|172\\.(1[6-9]|2\\d|3[0-1])\\.)/.test(host)) {\n    throw new Error('Blocked private/local URL (SSRF protection)');\n  }\n} catch (e) {\n  if (String(e.message).includes('Blocked')) throw e;\n  throw new Error('Invalid URL');\n}\nconst use_apify = body.use_apify === true || body.use_apify === 'true';\nconst deep_search = body.deep_search === true || body.deep_search === 'true';\nreturn {\n  source_url: url,\n  use_apify,\n  deep_search,\n  search_query: body.search_query || '',\n  max_results: Math.min(Number(body.max_results) || 3, 5)\n};\n"
+      },
+      "name": "Normalize + Validate",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        300,
+        300
+      ],
+      "notes": "SSRF guards + flags. source_url always from validated input."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.use_apify }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "name": "IF Use Apify",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        520,
+        300
+      ],
+      "notes": "Paid fallback only when body.use_apify=true"
     },
     {
       "parameters": {
         "method": "POST",
         "url": "https://api.apify.com/v2/acts/6sigmag~fast-website-content-crawler/run-sync-get-dataset-items",
-        "sendQueryParameters": true,
+        "sendQuery": true,
         "queryParameters": {
           "parameters": [
             {
@@ -28,23 +63,142 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "{\n    \"startUrls\": [\n        \"{{ $json.body.url }}\"\n    ]\n}",
+        "jsonBody": "={\n  \"startUrls\": [\n    \"{{ $json.source_url }}\"\n  ]\n}",
         "options": {
-          "responseFormat": "json"
+          "responseFormat": "json",
+          "timeout": 120000
         }
       },
-      "name": "Apify Crawler",
+      "name": "Apify Crawler (optional)",
       "type": "n8n-nodes-base.httpRequest",
-      "position": [350, 300],
-      "notes": "Triggers Apify Fast Crawler and returns dataset items in one sync call."
+      "position": [
+        760,
+        140
+      ],
+      "notes": "Optional paid path. Replace [INSERT-APIFY-TOKEN] or bind n8n credential — never commit real keys."
     },
     {
       "parameters": {
-        "jsCode": "// Extract the text content from the first item returned by Apify\nconst crawlData = items[0].json;\nconst mainContent = Array.isArray(crawlData) ? crawlData[0].text : crawlData.text;\n\nreturn {\n  raw_text: mainContent || \"No content found\",\n  source_url: items[0].json[0]?.url || \"Unknown\"\n};"
+        "jsCode": "const upstream = $('Normalize + Validate').first().json;\nconst crawlData = items[0].json;\nconst mainContent = Array.isArray(crawlData) ? (crawlData[0]?.text || '') : (crawlData.text || '');\nreturn {\n  source_url: upstream.source_url,\n  raw_text: String(mainContent || 'No content found').slice(0, 50000),\n  fetched_by: 'apify',\n  ok: Boolean(mainContent)\n};\n"
       },
-      "name": "Extract Content",
+      "name": "Map Apify Output",
       "type": "n8n-nodes-base.code",
-      "position": [600, 300]
+      "position": [
+        1000,
+        140
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://r.jina.ai/{{ $json.source_url }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "text/plain"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer [INSERT-JINA-API-KEY]"
+            }
+          ]
+        },
+        "options": {
+          "responseFormat": "text",
+          "timeout": 60000
+        }
+      },
+      "name": "Jina Reader",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        760,
+        400
+      ],
+      "notes": "Default fetcher. Key optional for higher RPM — placeholder only. Or remove Authorization header for keyless 20 RPM."
+    },
+    {
+      "parameters": {
+        "jsCode": "const upstream = $('Normalize + Validate').first().json;\nconst resp = items[0].json;\nlet raw = '';\nif (typeof resp === 'string') raw = resp;\nelse if (typeof resp.data === 'string') raw = resp.data;\nelse if (typeof resp.content === 'string') raw = resp.content;\nelse if (typeof resp.text === 'string') raw = resp.text;\nelse raw = JSON.stringify(resp);\n\nraw = String(raw).replace(/\\s+/g, ' ').trim();\nconst ok = raw.length >= 80 && !/just a moment|cf-browser-verification|access denied/i.test(raw);\nreturn {\n  source_url: upstream.source_url,\n  raw_text: raw.slice(0, 50000),\n  fetched_by: 'jina',\n  ok,\n  use_apify: upstream.use_apify,\n  deep_search: upstream.deep_search,\n  search_query: upstream.search_query,\n  max_results: upstream.max_results\n};\n"
+      },
+      "name": "Map Jina Output",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        1000,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.ok }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "name": "IF Jina OK",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        1220,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $('Normalize + Validate').item.json.source_url }}",
+        "options": {
+          "responseFormat": "text",
+          "timeout": 30000
+        }
+      },
+      "name": "HTTP HTML Fallback",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1440,
+        520
+      ],
+      "notes": "Free fallback when Jina empty/blocked. Static HTML only."
+    },
+    {
+      "parameters": {
+        "jsCode": "const upstream = $('Normalize + Validate').first().json;\nconst resp = items[0].json;\nlet html = '';\nif (typeof resp === 'string') html = resp;\nelse if (typeof resp.data === 'string') html = resp.data;\nelse if (typeof resp.body === 'string') html = resp.body;\nelse html = String(resp.data || resp.text || '');\n\n// crude readability: strip scripts/styles/tags\nlet text = html\n  .replace(/<script[\\s\\S]*?<\\/script>/gi, ' ')\n  .replace(/<style[\\s\\S]*?<\\/style>/gi, ' ')\n  .replace(/<nav[\\s\\S]*?<\\/nav>/gi, ' ')\n  .replace(/<footer[\\s\\S]*?<\\/footer>/gi, ' ')\n  .replace(/<[^>]+>/g, ' ')\n  .replace(/\\s+/g, ' ')\n  .trim();\n\nconst ok = text.length >= 80;\nreturn {\n  source_url: upstream.source_url,\n  raw_text: text.slice(0, 50000),\n  fetched_by: 'http_html',\n  ok,\n  use_apify: upstream.use_apify\n};\n"
+      },
+      "name": "Map HTML Output",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        1660,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Prefer successful path items; emit final contract for Logic Engine\nconst item = items[0].json;\nif (!item.ok && !item.raw_text) {\n  throw new Error('All fetchers failed to produce usable text');\n}\nreturn {\n  raw_text: item.raw_text || '',\n  source_url: item.source_url,\n  fetched_by: item.fetched_by || 'unknown'\n};\n"
+      },
+      "name": "Finalize Output",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        1880,
+        300
+      ],
+      "notes": "Contract for Logic Engine: { raw_text, source_url, fetched_by }"
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseBody": "={{ JSON.stringify($json) }}"
+        }
+      },
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "position": [
+        2100,
+        300
+      ]
     }
   ],
   "connections": {
@@ -52,17 +206,119 @@
       "main": [
         [
           {
-            "node": "Apify Crawler",
+            "node": "Normalize + Validate",
             "index": 0
           }
         ]
       ]
     },
-    "Apify Crawler": {
+    "Normalize + Validate": {
       "main": [
         [
           {
-            "node": "Extract Content",
+            "node": "IF Use Apify",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Use Apify": {
+      "main": [
+        [
+          {
+            "node": "Apify Crawler (optional)",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Jina Reader",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Apify Crawler (optional)": {
+      "main": [
+        [
+          {
+            "node": "Map Apify Output",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Map Apify Output": {
+      "main": [
+        [
+          {
+            "node": "Finalize Output",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Jina Reader": {
+      "main": [
+        [
+          {
+            "node": "Map Jina Output",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Map Jina Output": {
+      "main": [
+        [
+          {
+            "node": "IF Jina OK",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Jina OK": {
+      "main": [
+        [
+          {
+            "node": "Finalize Output",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HTTP HTML Fallback",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP HTML Fallback": {
+      "main": [
+        [
+          {
+            "node": "Map HTML Output",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Map HTML Output": {
+      "main": [
+        [
+          {
+            "node": "Finalize Output",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Finalize Output": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
             "index": 0
           }
         ]
