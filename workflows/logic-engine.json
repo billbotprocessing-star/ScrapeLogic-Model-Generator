@@ -63,11 +63,11 @@
         560,
         300
       ],
-      "notes": "System prompt from prompts/reasoning-claude.md. Replace [INSERT-ANTHROPIC-API-KEY] or bind n8n Anthropic credential — never commit real keys."
+      "notes": "System prompt from prompts/reasoning-claude.md. Replace [INSERT-ANTHROPIC-API-KEY] or bind n8n Anthropic credential \u2014 never commit real keys."
     },
     {
       "parameters": {
-        "jsCode": "// Parse Claude Messages API → strategic JSON (prompts/reasoning-claude.md schema)\nconst resp = items[0].json;\nlet text = '';\nif (resp.content && Array.isArray(resp.content)) {\n  text = resp.content.map(p => p.text || '').join('\\n');\n} else if (typeof resp.text === 'string') {\n  text = resp.text;\n}\n\nconst fenced = text.match(/```(?:json)?\\s*([\\s\\S]*?)```/);\nconst candidate = (fenced ? fenced[1] : text).trim();\nlet strategy;\ntry { strategy = JSON.parse(candidate); }\ncatch (e) { throw new Error('Claude did not return parseable JSON: ' + e.message); }\n\nconst upstream = $('Normalize + Light Clean').first().json;\nreturn {\n  source_url: upstream.source_url,\n  goal: upstream.goal,\n  positioning: strategy.positioning || {},\n  gaps: strategy.gaps || {},\n  ui_guidance: strategy.ui_guidance || {},\n  strategy\n};\n"
+        "jsCode": "// Parse Claude Messages API \u2192 strategic JSON (prompts/reasoning-claude.md schema)\nconst resp = items[0].json;\nlet text = '';\nif (resp.content && Array.isArray(resp.content)) {\n  text = resp.content.map(p => p.text || '').join('\\n');\n} else if (typeof resp.text === 'string') {\n  text = resp.text;\n}\n\nconst fenced = text.match(/```(?:json)?\\s*([\\s\\S]*?)```/);\nconst candidate = (fenced ? fenced[1] : text).trim();\nlet strategy;\ntry { strategy = JSON.parse(candidate); }\ncatch (e) { throw new Error('Claude did not return parseable JSON: ' + e.message); }\n\nconst upstream = $('Normalize + Light Clean').first().json;\nreturn {\n  source_url: upstream.source_url,\n  goal: upstream.goal,\n  positioning: strategy.positioning || {},\n  gaps: strategy.gaps || {},\n  ui_guidance: strategy.ui_guidance || {},\n  strategy\n};\n"
       },
       "name": "Parse Claude JSON",
       "type": "n8n-nodes-base.code",
@@ -106,7 +106,7 @@
         1040,
         300
       ],
-      "notes": "System prompt from prompts/creation-gpt5.md. Replace [INSERT-OPENAI-API-KEY] or bind n8n OpenAI credential — never commit real keys."
+      "notes": "System prompt from prompts/creation-gpt5.md. Replace [INSERT-OPENAI-API-KEY] or bind n8n OpenAI credential \u2014 never commit real keys."
     },
     {
       "parameters": {
