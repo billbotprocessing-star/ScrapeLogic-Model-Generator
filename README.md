@@ -34,7 +34,7 @@ It bridges the gap between "live web data" and "actionable business artifacts" f
 3.  **Input:** Raw text file or URL scrape.
 
 ### Installation
-1.  Clone the repo: `git clone https://github.com/Your-Org/scrapelogic-model-generator.git`
+1.  Clone the repo: `git clone https://github.com/billbotprocessing-star/ScrapeLogic-Model-Generator.git`
 2.  Import the `.json` workflows from the `/workflows` directory into your n8n instance.
 3.  Configure your credentials in n8n for Claude and OpenAI.
 
@@ -66,3 +66,4 @@ Proprietary - ScrapeLogic Internal Development.
 │   ├── templates                 # Markdown templates for business artifacts
 │   └── examples                  # Sample "Before & After" output reports
 └── README.md
+```
